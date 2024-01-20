@@ -306,3 +306,22 @@ For ex::
     
 ```
 
+using **failed_when** or **changed_when** to handle errors more gracefully. This allows you to perform specific actions based on the outcome of a task.
+
+**lineinfile**: Ansible module used to ensure that a particular line is present in a file, or absent from it. 
+                used while editing the files with any editor,instaed fo using the "sed" which is non interactivce tool for text manipulation in linux distributions...
+for ex:: nano /etc/ssh/sshd_config 
+In this case, it's used to ensure that the line PasswordAuthentication yes is present in the sshd_config file.
+```
+name: replace password authentication to yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PasswordAuthentication no"
+        line: PasswordAuthentication yes
+      notify: restart sshd
+      when: aws_cli_install is succeeded
+      tags:
+        - sshd  why we are doing this task
+```
+
+

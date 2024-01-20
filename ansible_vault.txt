@@ -17,6 +17,7 @@ ansible-vault encrypt_string 'India@123456' --name 'user_password'
 To Decrypt the string:
 Make sure you delete the spaces before the lines.
 
+ --------------------------------------------------------------------------
  
 
 

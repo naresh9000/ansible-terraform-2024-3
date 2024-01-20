@@ -34,9 +34,8 @@
           unzip awscliv2.zip
           sudo ./aws/install
         fi
-      ignore_errors: true
       register: aws_cli_install
-      when: aws_cli_version.stdout == ""
+      changed_when: "'already installed' not in aws_cli_install.stdout"
       tags:
         - aws-cli
 
@@ -50,7 +49,7 @@
       ignore_errors: true
       when: aws_cli_install is succeeded
 
-    - name: copy encrypted aws_creds  from ansible-controller to all-servers to /tmp folder
+    - name: copy encrypted aws_creds file from local to target all-servers
       copy:
         src: /home/ansibleadmin/aws_creds
         dest: /home/ansibleadmin/.aws/credentials/
@@ -64,8 +63,11 @@
         path: /etc/ssh/sshd_config
         regexp: "^PasswordAuthentication no"
         line: PasswordAuthentication yes
-      ignore_errors: true
+      notify: restart sshd
       when: aws_cli_install is succeeded
+      tags:
+        - sshd
+
     - name: creating the adminuser
       user:
         name: naresh
@@ -79,12 +81,9 @@
       shell: |
         aws s3 ls
       register: s3_bucket_check
-      ignore_errors: true
       when: aws_cli_install is succeeded
   handlers:
     - name: restart sshd
       service:
         name: sshd
         state: restarted
-      ignore_errors: true
-      when: aws_cli_install is succeeded
