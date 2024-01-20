@@ -1,2 +1,25 @@
 ansible-playbook -i testservers vault-testing.yml --check --ask-vault-pass
 ansible-playbook -i testservers vault-testing.yml -vv --ask-vault-pass
+
+
+Encrypting an existing file with content:
+ansible-vault encrypt  aws_creds
+ansible-vault decrypt aws_creds
+
+Create encrypted a file on-demand:
+#This will create a file which is empty and we need to provide creds.
+ansible-vault create aws_creds
+
+ansible-vault decrypt aws_creds
+cat aws_creds
+
+ansible-vault encrypt_string 'India@123456' --name 'user_password'
+To Decrypt the string:
+Make sure you delete the spaces before the lines.
+
+ 
+
+
+
+
+
