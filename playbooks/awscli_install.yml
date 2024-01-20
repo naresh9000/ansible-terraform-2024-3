@@ -1,0 +1,90 @@
+---
+- name: Installi aws-cli on all servers
+  hosts: allservers
+  become: true
+  gather_facts: false
+  become_user: root
+  serial: 3
+  vars:
+    user_password: !vault |
+      $ANSIBLE_VAULT;1.1;AES256
+      37303566643861326431633031326139656238613761323531333336376538386537333562323266
+      3232306461343462326463333061656139333166623766360a323836353164623135373334383666
+      32323263343338333830373330643461373435663333313531393034323733313235303638383262
+      3166383939316239630a303865323961656162386439353534613934633433623536383861383836
+      6439
+
+  tasks:
+    - name: run apt-get update
+      command: apt-get update
+
+    - name: Insatll unzip ,jq,nettools
+      shell: |
+        apt-get install -y unzip jq net-tools
+
+    - name: Checking the aws-cli version
+      shell: |
+        aws --version
+        aws_cli_version=$(aws --version | awk '{print $1}' | cut -c 2-)
+      register: aws_cli_version
+    - name: Install aws cli and register the version
+      shell: |
+        if [ "$aws_cli_version" == "" ]; then
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+        fi
+      ignore_errors: true
+      register: aws_cli_install
+      when: aws_cli_version.stdout == ""
+      tags:
+        - aws-cli
+
+    - name: create .aws folder
+      file:
+        path: /home/ansibleadmin/.aws
+        state: directory
+        mode: 0755
+        owner: root
+        group: root
+      ignore_errors: true
+      when: aws_cli_install is succeeded
+
+    - name: copy encrypted aws_creds  from ansible-controller to all-servers to /tmp folder
+      copy:
+        src: /home/ansibleadmin/aws_creds
+        dest: /home/ansibleadmin/.aws/credentials/
+        owner: root
+        group: root
+        mode: 0644
+      when: aws_cli_install is succeeded
+
+    - name: replace password authentication to yes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^PasswordAuthentication no"
+        line: PasswordAuthentication yes
+      ignore_errors: true
+      when: aws_cli_install is succeeded
+    - name: creating the adminuser
+      user:
+        name: naresh
+        state: present
+        groups: root
+        shell: /bin/bash
+        group: root
+        password: "{{ user_password | password_hash('sha512') }}"
+
+    - name: check s3 bucket exists or not
+      shell: |
+        aws s3 ls
+      register: s3_bucket_check
+      ignore_errors: true
+      when: aws_cli_install is succeeded
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+      ignore_errors: true
+      when: aws_cli_install is succeeded

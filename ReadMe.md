@@ -190,3 +190,118 @@ project_root/
 └── k8s_manifests/
     ├── deployment.yaml
     └── service.yaml
+
+
+**when** statement is used to add conditional logic to a task. It allows you to control whether or not a particular task should be executed based on the outcome of a condition.
+
+for ex::
+```
+---
+- name: Example Playbook with Complex 'when' Statement
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    environment: "production"
+    deployment_enabled: true
+
+  tasks:
+    - name: Deploy Application in Production
+      debug:
+        msg: "Deploying application to production"
+      when: environment == "production" and deployment_enabled
+
+
+```
+
+
+```CI/CD use case
+---
+- name: Deploy App to Kubernetes
+  hosts: <inventory-group-name>
+  gather_facts: false
+
+  vars:
+    environment: "production"
+
+  tasks:
+    - name: Deploy Kubernetes Deployment
+      k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: my-app
+          spec:
+            replicas: 3
+            template:
+              metadata:
+                labels:
+                  app: my-app
+              spec:
+                containers:
+                  - name: my-app-container
+                    image: my-app:latest
+      when: environment == "production"
+
+```
+
+```when statement used in the list
+---
+- name: Complex Kubernetes Deployment
+  hosts: kubernetes_nodes
+  become: true
+
+  vars:
+    deploy_web_app: true
+    deploy_api_app: false
+    deploy_db_app: true
+
+  tasks:
+    - name: Deploy Web Application
+      debug:
+        msg: "Deploying Web Application"
+      when: deploy_web_app
+
+    - name: Deploy API Application
+      debug:
+        msg: "Deploying API Application"
+      when: deploy_api_app
+
+    - name: Deploy Database Application
+      debug:
+        msg: "Deploying Database Application"
+      when: deploy_db_app
+
+    - name: Deploy Monitoring Stack
+      debug:
+        msg: "Deploying Monitoring Stack"
+      when: deploy_web_app and deploy_api_app
+
+    - name: Deploy Logging Stack
+      debug:
+        msg: "Deploying Logging Stack"
+      when: deploy_api_app or deploy_db_app
+
+
+```
+
+** "|"-multiline string accepted and ">" folding string preserved sybols  **
+
+For ex::
+```
+- name:  install aws cli
+  shell: |
+    sudo apt install awscli
+    aws --version
+
+    so if we use > in place of |
+    it reads like folded string "sudo apt install awscli aws --version" which treats as wrong
+  env: >
+      - name: ENV_VAR_1
+        value: "value1"
+      - name: ENV_VAR_2
+        value: "value2"
+    
+```

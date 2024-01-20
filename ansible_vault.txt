@@ -1,0 +1,2 @@
+ansible-playbook -i testservers vault-testing.yml --check --ask-vault-pass
+ansible-playbook -i testservers vault-testing.yml -vv --ask-vault-pass
