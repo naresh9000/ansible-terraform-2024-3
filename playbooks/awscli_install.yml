@@ -73,7 +73,7 @@
         groups: root
         shell: /bin/bash
         group: root
-        password: "{{ user_password | password_hash('sha512') }}"
+        password: "{{ '%s'  | format(user_password) | regex_replace('\n', '') | password_hash('sha512') }}"
 
     - name: check s3 bucket exists or not
       shell: |
