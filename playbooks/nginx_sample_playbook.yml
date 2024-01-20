@@ -1,0 +1,40 @@
+---
+- name: playbook for insdtalling the nginx
+  hosts: pvt
+  # # gather_facts: false is a playbook option that instructs
+  # Ansible to skip the default task of gathering facts about the
+  # target hosts before executing other tasks in the playbook.
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Perform APT Update
+      shell: apt update
+
+    - name: Install Nginx
+      shell: apt install nginx -y
+      tags:
+        - nginx
+    - name: create the custom index.html file
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+          <head>
+          <title>Welcome to nginx</title>
+          </head>
+          <body style="text-align: center;">
+            <h1 style="color: red;">Hello from {{ inventory_hostname }}</h1>
+          </body>
+          </html>
+      notify:
+        - Restart Nginx
+  # notify keyword is used within a task to specify a list of handlers that should be
+  # executed when the task changes something on the managed host. Handlers are special tasks
+  # that are only executed when notified by other tasks.notify keyword is used to trigger handlers
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+    - name: Start Nginx Service
+      shell: service nginx start

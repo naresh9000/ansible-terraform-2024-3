@@ -1,0 +1,25 @@
+---
+- hosts: pvt
+  gather_facts: false
+  tasks:
+    - name: copy file from the remote to the local
+      fetch:
+        src: /usr/share/nginx/html/index.html
+        dest: /tmp/
+
+---
+- hosts: pvt
+  gather_facts: false
+  become: true
+  become_user: ansibleadmin
+  serial: 1
+  vars:
+    host_names: "{{ ansible_facts['hostname']}}"
+  tasks:
+    - name: generate random
+      shell: date +%Y%m%d%H%M%S
+      register: timestamp
+
+    - name: display random output
+      debug:
+        var: timestamp.stdout
