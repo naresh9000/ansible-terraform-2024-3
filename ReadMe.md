@@ -325,3 +325,7 @@ name: replace password authentication to yes
 ```
 
 
+Note::
+usually when we execute below command (lets say have 100-servers) stores lot of memory which is concern
+ansible -i invfile all -m setup  => pings all servers and gives all info i.e ansible_facts 
+So using the REdis - for doing the "In-memory cache"
