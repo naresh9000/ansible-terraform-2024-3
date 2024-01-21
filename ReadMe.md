@@ -324,8 +324,48 @@ name: replace password authentication to yes
         - sshd  why we are doing this task
 ```
 
+# REDIS
+Note::**REDIS**
+usually when we execute below command (lets say have 100-servers) retives lot of memory from database ,but everytime hitting the server databse which is concern,so we use redis as cache data store for limited period..
 
-Note::
-usually when we execute below command (lets say have 100-servers) stores lot of memory which is concern
-ansible -i invfile all -m setup  => pings all servers and gives all info i.e ansible_facts 
-So using the REdis - for doing the "In-memory cache"
+**uses**
+Caching,Session Store,Task Queue (with Redis Lists),Temporary Data Storage:
+
+```pings all servers and gathers all info i.e *ansible_facts*
+ansible -i invfile all -m setup
+ansible -i invfile webservers[index_value_to_which_facts_required] -m setup
+```
+So using the Redis - for doing the "In-memory cache"
+So first we need the redis cli and redis service(python lib) which talks to redis server(locally or remote(aws))
+
+```
+apt install python3-pip -y
+apt install  redis-tools -y
+pip3 install redis -y
+
+```
+
+create the redis cluster in aws and copy the primary endpoint
+
+
+open ansible.cfg file from root user of ansible controller machine->copy the below content
+```
+nano /etc/ansible/ansible.cfg
+```
+
+```
+[defaults]
+fact_caching = redis
+fact_caching_prefix = ansible_facts_
+fact_caching_connection = <primary endpoint>:6379:0
+fact_caching_timeout = 60
+gathering = smart
+```
+fact_caching_timeout => cache will be deleted after one minute
+
+telnet/ssh <endpoint> <port>  => check it is connecting
+give command like =>  keys *
+Next ; ansible -i invfile all -m setup
+        key * => cache generates for all servers
+        mget <key_name_generated>
+

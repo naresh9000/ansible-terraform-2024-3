@@ -1,0 +1,76 @@
+# Certainly! Let's take an example use case in the context of CI/CD (Continuous Integration/Continuous Deployment).
+#  In this example, we'll create an Ansible playbook that deploys a simple web application to a Kubernetes cluster.
+#  This playbook will gather facts about the target Kubernetes nodes and deploy the application.
+
+# Assumptions:
+
+# You have a running Kubernetes cluster.
+# Kubectl is configured on the Ansible control machine.
+# You have a Dockerized web application stored in a container registry.
+# Ansible Playbook: deploy_web_app.yaml
+
+# yaml
+
+---
+- name: Deploy Web Application to Kubernetes
+  hosts: k8s_nodes
+  gather_facts: true
+
+  tasks:
+    - name: Ensure kubectl is installed
+      command: kubectl version --client
+      ignore_errors: true
+      register: kubectl_version
+      changed_when: false
+
+    - name: Display kubectl version
+      debug:
+        var: kubectl_version.stdout_lines
+
+    - name: Get Kubernetes Nodes
+      command: kubectl get nodes --output=json
+      register: k8s_nodes_info
+
+    - name: Display Kubernetes Nodes Info
+      debug:
+        var: k8s_nodes_info.stdout
+
+    - name: Deploy Web Application
+      k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: web-app
+          spec:
+            replicas: 3
+            selector:
+              matchLabels:
+                app: web-app
+            template:
+              metadata:
+                labels:
+                  app: web-app
+              spec:
+                containers:
+                  - name: web-app
+                    image: your-registry/your-web-app:latest
+                    ports:
+                      - containerPort: 80
+# This playbook performs the following tasks:
+
+# Checks if kubectl is installed.
+# Gets the version of kubectl.
+# Retrieves information about Kubernetes nodes.
+# Displays the gathered facts about Kubernetes nodes.
+# Deploys a web application using a Kubernetes Deployment.
+# Note:
+
+# Replace your-registry/your-web-app:latest with the actual image location of your Dockerized web application.
+# You can run this playbook using the following command:
+
+# bash
+# Copy code
+# ansible-playbook -i your_inventory_file deploy_web_app.yaml
+# This example demonstrates how Ansible can gather facts about Kubernetes nodes and deploy an application as part of a CI/CD process.
